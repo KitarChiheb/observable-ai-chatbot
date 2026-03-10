@@ -66,6 +66,13 @@ The chatbot exposes metrics that Prometheus scrapes every 5 seconds, which are t
 ## API Usage
 
 ### Chat Endpoint
+
+**Windows PowerShell:**
+```powershell
+curl "http://localhost:8000/chat?prompt=What%20is%20machine%20learning?" -UseBasicParsing
+```
+
+**Linux/Mac:**
 ```bash
 curl "http://localhost:8000/chat?prompt=What%20is%20machine%20learning?"
 ```
@@ -82,9 +89,15 @@ curl "http://localhost:8000/chat?prompt=What%20is%20machine%20learning?"
 ```
 
 ### Available Models
-- `meta-llama/llama-3.3-70b-instruct:free` (default)
-- `arcee-ai/trinity-mini:free`
+- `meta-llama/llama-3.3-70b-instruct:free` (default - may be rate limited)
+- `arcee-ai/trinity-mini:free` (recommended for testing)
 
+**Windows PowerShell:**
+```powershell
+curl "http://localhost:8000/chat?prompt=Hello&model=arcee-ai/trinity-mini:free" -UseBasicParsing
+```
+
+**Linux/Mac:**
 ```bash
 curl "http://localhost:8000/chat?prompt=Hello&model=arcee-ai/trinity-mini:free"
 ```
@@ -150,6 +163,20 @@ Create a new dashboard and add these panels with their exact PromQL queries:
 ## Development
 
 ### Local Development
+
+**Windows PowerShell:**
+```powershell
+# Install dependencies
+pip install -r requirements.txt
+
+# Set environment variables
+$env:OPENROUTER_API_KEY="your_key_here"
+
+# Run locally
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+```
+
+**Linux/Mac:**
 ```bash
 # Install dependencies
 pip install -r requirements.txt
@@ -172,8 +199,32 @@ observable-ai-chatbot/
 ├── Dockerfile          # Container build instructions
 ├── requirements.txt    # Python dependencies
 ├── .env.example        # Environment variables template
+├── .gitignore          # Git ignore file
 └── README.md          # This documentation
 ```
+
+## Testing the Project
+
+This is a **backend-only project** designed to teach observability concepts. There is no frontend - just APIs that you can test directly.
+
+### Testing Methods:
+
+1. **Browser Testing:**
+   - http://localhost:8000 - API root with documentation
+   - http://localhost:8000/docs - Interactive Swagger UI
+   - http://localhost:8000/health - Health check endpoint
+   - http://localhost:9090 - Prometheus UI
+   - http://localhost:3000 - Grafana dashboard
+
+2. **API Testing (shown above):**
+   - Use curl commands to test the chat endpoint
+   - Check the /metrics endpoint for Prometheus data
+   - View logs with `docker-compose logs chatbot`
+
+3. **Error Testing:**
+   - Try invalid model names to see error handling
+   - Make requests without required parameters
+   - Check Grafana error rate panel (will show data when errors occur)
 
 ## Production Considerations
 
