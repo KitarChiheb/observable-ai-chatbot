@@ -1,0 +1,61 @@
+# Docker Compose configuration for the observable AI chatbot stack
+# Includes the chatbot app, Prometheus for metrics collection, and Grafana for visualization
+
+version: '3.8'
+
+services:
+  chatbot:
+    build: .
+    ports:
+      - "8000:8000"  # Expose FastAPI app on port 8000
+    env_file:
+      - .env  # Load environment variables from .env file
+    depends_on:
+      - prometheus  # Ensure Prometheus starts before chatbot (optional)
+    networks:
+      - monitoring  # Use dedicated network for service communication
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"  # Expose Prometheus UI on port 9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml  # Mount custom config
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"  # Expose Grafana UI on port 3000
+    depends_on:
+      - prometheus  # Ensure Prometheus is running before Grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Default admin password (change in production)
+      - GF_USERS_ALLOW_SIGN_UP=false  # Disable user registration
+    networks:
+      - monitoring
+    restart: unless-stopped
+    volumes:
+      - grafana-storage:/var/lib/grafana  # Persist Grafana data
+
+networks:
+  monitoring:
+    driver: bridge  # Create isolated network for monitoring stack
+
+volumes:
+  grafana-storage:  # Persistent volume for Grafana configuration and dashboards
